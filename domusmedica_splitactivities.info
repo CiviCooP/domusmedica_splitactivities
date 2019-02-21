@@ -1,0 +1,6 @@
+name = domusmedica_splitactivities
+description = Download Wachtpost activities, but split the line on the day
+core = 7.x
+package = Domus Medica
+version = 7.x-1.0
+files[]='includes/splitactivities_exporter.inc'
