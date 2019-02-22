@@ -159,7 +159,6 @@ SQL;
       } else {
 
       $result[]  = [
-        'id'=> $dao->id,
         'datum' => $dayStart,
         'achternaam'=> $dao->last_name,
         'voornaam' => $dao -> first_name,
@@ -169,7 +168,6 @@ SQL;
         'wachtdienst' => $dao->wachtdienst
       ];
       $result[]  = [
-        'id'=> $dao->id,
         'datum' => $dayEnd,
         'achternaam'=> $dao->last_name,
         'voornaam' => $dao -> first_name,
