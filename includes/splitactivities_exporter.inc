@@ -165,7 +165,7 @@ SQL;
         'voornaam' => $dao -> first_name,
         'riziv' =>  $dao -> external_identifier,
         'startijd'=> $this->time($dao-> start_time),
-        'eindtijd'=> '00:00',
+        'eindtijd'=> '24:00',
         'wachtdienst' => $dao->wachtdienst
       ];
       $result[]  = [
