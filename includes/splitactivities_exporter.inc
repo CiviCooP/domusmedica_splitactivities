@@ -9,19 +9,80 @@ class SplitActivitiesExporter {
 
 
   var $data;
+  var $cf;
+  var $wachtpostDienstTypeId;
+  var $activityTargetTypeId;
+  var $activityAssigneeTypeId;
 
+  /**
+   * SplitActivitiesExporter constructor.
+   */
+  public function __construct() {
+    $this->cf = $this->customFields(
+      ['einddatum_tijd']
+    );
+    $this->wachtpostDienstTypeId = civicrm_api3('OptionValue', 'getvalue', [
+      'return' => "value",
+      'option_group_id' => "activity_type",
+      'name' => "domusmedica_wachtpostdienst",
+    ]);
+    $this->activityAssigneeTypeId = civicrm_api3('OptionValue', 'getvalue', [
+      'return' => "value",
+      'option_group_id' => "activity_contacts",
+      'name' => "Activity Assignees",
+    ]);
+    $this->activityTargetTypeId = civicrm_api3('OptionValue', 'getvalue', [
+      'return' => "value",
+      'option_group_id' => "activity_contacts",
+      'name' => "Activity Targets",
+    ]);
+  }
+
+  /**
+   * @param $field
+   *
+   * @return string
+   * @throws \Exception
+   */
   private function day($field){
     $date = new DateTime($field);
     return $date->format('d/m/Y');
   }
 
+  /**
+   * @param $field
+   *
+   * @return string
+   * @throws \Exception
+   */
   private function time($field){
     $date = new DateTime($field);
     return $date->format('H:i');
   }
 
   /**
+   * @param $fields
    *
+   * @return array
+   * @throws \CiviCRM_API3_Exception
+   */
+  private function customFields($fields){
+    $result = [];
+    foreach($fields as $field){
+      $cf = civicrm_api3('CustomField', 'getsingle', [
+        'name' => $field,
+      ]);
+      $cf['table_name'] = civicrm_api3('CustomGroup', 'getvalue', [
+        'return' => "table_name",
+        'id' => $cf['custom_group_id'],
+      ]);
+      $result[$field]=$cf;
+    }
+    return $result;
+  }
+
+  /**
+   * Read the activities to be exported from civicrm
    */
   public function readFromCivi(){
     $sql = <<< SQL
@@ -30,16 +91,15 @@ SELECT DISTINCT act.id AS id
 ,               c1.last_name AS last_name
 ,               c1.first_name AS first_name
 ,               c1.external_identifier AS external_identifier
-,               cf.einddatum_tijd_33 AS end_time
+,               cf.{$this->cf['einddatum_tijd']['column_name']} AS end_time
 ,               c2.display_name AS wachtdienst
 FROM civicrm_activity act
-  LEFT JOIN civicrm_activity_contact ac ON act.id = ac.activity_id AND (ac.record_type_id = '1')
+  LEFT JOIN civicrm_activity_contact ac ON act.id = ac.activity_id AND (ac.record_type_id = {$this->activityAssigneeTypeId})
   LEFT JOIN civicrm_contact c1 ON ac.contact_id = c1.id
- 
-  LEFT JOIN civicrm_activity_contact ac2 ON act.id = ac2.activity_id AND (ac2.record_type_id = '3')
+  LEFT JOIN civicrm_activity_contact ac2 ON act.id = ac2.activity_id AND (ac2.record_type_id = {$this->activityTargetTypeId})
   LEFT JOIN civicrm_contact c2 ON ac2.contact_id = c2.id
-  LEFT JOIN civicrm_value_wachtpost_vel_6 cf ON act.id = cf.entity_id
-  WHERE (( (act.activity_type_id IN  ('200')) ))
+  LEFT JOIN {$this->cf['einddatum_tijd']['table_name']} cf ON act.id = cf.entity_id
+  WHERE act.activity_type_id = {$this->wachtpostDienstTypeId}
 SQL;
     $result = [];
     $dao = CRM_Core_DAO::executeQuery($sql,[]);
@@ -59,7 +119,6 @@ SQL;
         'wachtdienst' => $dao->wachtdienst
         ];
       } else {
-
 
       $result[]  = [
         'id'=> $dao->id,
