@@ -201,6 +201,7 @@ SQL;
       }
       $output .= "\n";
     }
+    return $output;
   }
 
 }
