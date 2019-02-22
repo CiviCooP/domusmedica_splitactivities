@@ -14,7 +14,7 @@ function domusmedica_splitactivities_menu() {
     ['title' => 'Lijst van wachtdiensten',
     'description' => 'Wachtdiensten',
     'page callback' => '_domusmedica_splitactivities_csv',
-    'access arguments' => ['wachtdienstcoordinator'],
+    'access arguments' => ['administrator'],
     'type' => MENU_NORMAL_ITEM,
     ];
   return $items;
