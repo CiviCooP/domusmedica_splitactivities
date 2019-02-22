@@ -20,12 +20,23 @@ function domusmedica_splitactivities_menu() {
   return $items;
 }
 
+/**
+ *
+ */
 function _domusmedica_splitactivities_csv() {
-  //drupal_add_http_header('Content-Type','text/csv; charset=utf-8');
-  //drupal_add_http_header('Content-Disposition','attachment; filename=ke.csv');
+  drupal_add_http_header('Content-Type','text/csv; charset=utf-8');
+  drupal_add_http_header('Content-Disposition','attachment; filename=verantwoording.csv');
   civicrm_initialize();
-  $exporter = new SplitActivitiesExporter();
+  $exporter = new SplitActivitiesExporter(drupal_get_query_parameters());
   $exporter->readFromCivi();
   print($exporter->format());
+}
+/**
+ *
+ */
+function _domusmedica_splitactivities_link(){
+  $params = drupal_get_query_parameters();
+  $link = url('domusmedica_splitactivities/csv',['query'=>$params]);
+  print "<a href='$link'>Download CSV</a>";
 }
 

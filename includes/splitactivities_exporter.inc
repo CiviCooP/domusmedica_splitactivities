@@ -13,11 +13,13 @@ class SplitActivitiesExporter {
   var $wachtpostDienstTypeId;
   var $activityTargetTypeId;
   var $activityAssigneeTypeId;
+  var $params;
 
   /**
    * SplitActivitiesExporter constructor.
    */
-  public function __construct() {
+  public function __construct($params) {
+    $this->params = $params;
     $this->cf = $this->customFields(
       ['einddatum_tijd']
     );
@@ -58,6 +60,18 @@ class SplitActivitiesExporter {
   private function time($field){
     $date = new DateTime($field);
     return $date->format('H:i');
+  }
+
+  private function queryDay($field) {
+    if (empty($field)) {
+      return FALSE;
+    }
+    $date = DateTime::createFromFormat('d-m-Y', $field);
+    if($date){
+      return $date->format('Y-m-d');
+    } else {
+      return false;
+    }
   }
 
   /**
@@ -101,15 +115,39 @@ FROM civicrm_activity act
   LEFT JOIN {$this->cf['einddatum_tijd']['table_name']} cf ON act.id = cf.entity_id
   WHERE act.activity_type_id = {$this->wachtpostDienstTypeId}
 SQL;
-    $result = [];
-    $dao = CRM_Core_DAO::executeQuery($sql,[]);
+    $result[] = ["Datum","Achternaam","Voornaam","Riziv","Starttijd","Eindtijd","Wachtdienst","Aangepaste tekst"];
+    $queryParams = [];
+
+    if(isset($this->params['display_name'])&&!empty($this->params['display_name'])){
+      $sql .= " AND c2.display_name like %1";
+      $queryParams[1] = [
+        '%'.$this->params['display_name'].'%',
+        'String'
+      ];
+    }
+
+    if(isset($this->params['activity_date_time'])){
+      $min = $this->queryDay($this->params['activity_date_time']['min']);
+      if($min){
+        $sql .= " AND  act.activity_date_time > %2";
+        $queryParams[2] = [$min,'String'];
+      }
+      $max = $this->queryDay($this->params['activity_date_time']['max']);
+      if($max){
+        $sql .= " AND  act.activity_date_time < %3";
+        $queryParams[3] = [$max,'String'];
+      }
+    }
+
+
+    $dao = CRM_Core_DAO::executeQuery($sql,$queryParams);
     while($dao->fetch()){
       
       $dayStart = $this->day($dao-> start_time);
       $dayEnd   = $this->day($dao->end_time);
       if($dayStart==$dayEnd){
         // just one line
-        $result [] =   ['id'=> $dao->id,
+        $result [] =   [
         'datum' => $dayStart,
         'achternaam'=> $dao->last_name,
         'voornaam' => $dao -> first_name,
