@@ -186,7 +186,7 @@ SQL;
    * @return string
    */
   public function format() {
-    $output = "<pre>";
+    $output='';
     foreach ($this->data as $row) {
       $first = TRUE;
       foreach ($row as $field) {
@@ -201,7 +201,6 @@ SQL;
       }
       $output .= "\n";
     }
-    return $output.'</pre>';
   }
 
 }
